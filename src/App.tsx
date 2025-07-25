@@ -107,12 +107,12 @@ export default function AppFaturasLTSL() {
   // Gráficos
   const topAtrasadas = [...faturasFiltradas]
     .filter(f => calcularDiasAtraso(f.Vencimento) > 0)
-    .sort((a, b) => parseFloat(b.Saldo.replace(',', '.')) - parseFloat(a.Saldo.replace(',', '.')))
+    .sort((a, b) => parseFloat(String(b.Saldo).replace(',', '.')) - parseFloat(String(a.Saldo).replace(',', '.')))
     .slice(0, 5)
-    .map(f => ({ name: f.Cliente, valor: parseFloat(f.Saldo.replace(',', '.')) || 0 }));
+    .map(f => ({ name: f.Cliente, valor: parseFloat(String(f.Saldo).replace(',', '.')) || 0 }));
 
-  const totalAtrasado = faturasFiltradas.reduce((acc, f) => acc + (calcularDiasAtraso(f.Vencimento) > 0 ? parseFloat(f.Saldo.replace(',', '.')) || 0 : 0), 0);
-  const totalAVencer = faturasFiltradas.reduce((acc, f) => acc + (calcularDiasAtraso(f.Vencimento) === 0 ? parseFloat(f.Saldo.replace(',', '.')) || 0 : 0), 0);
+  const totalAtrasado = faturasFiltradas.reduce((acc, f) => acc + (calcularDiasAtraso(f.Vencimento) > 0 ? parseFloat(String(f.Saldo).replace(',', '.')) || 0 : 0), 0);
+  const totalAVencer = faturasFiltradas.reduce((acc, f) => acc + (calcularDiasAtraso(f.Vencimento) === 0 ? parseFloat(String(f.Saldo).replace(',', '.')) || 0 : 0), 0);
 
   // Renderização JSX
   return (
