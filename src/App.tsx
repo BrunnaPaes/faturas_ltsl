@@ -125,7 +125,7 @@ export default function AppFaturasLTSL() {
       {/* LOGO */}
       <div style={{ textAlign: "center", marginBottom: 20 }}>
         <img
-          src="/logo.png"
+          public="/logo.png"
           alt="Logo LTSL"
           style={{ width: 180, height: "auto", margin: "0 auto", display: "block" }}
           onError={e => e.currentTarget.style.display = 'none'} // oculta se não encontrar
