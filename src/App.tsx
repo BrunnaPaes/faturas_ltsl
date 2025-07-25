@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import faturas from "src/data/faturas_ltsl_filtradas.json";
+import faturas from "public/faturas_ltsl_filtradas.json";
 
 export default function AppFaturasLTSL() {
   const [usuario, setUsuario] = useState("");
