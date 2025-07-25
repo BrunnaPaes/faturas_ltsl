@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import faturas from "../data/faturas_ltsl_filtradas.json";
 
 export default function AppFaturasLTSL() {
   const [usuario, setUsuario] = useState("");
   const [logado, setLogado] = useState(false);
-  const [faturas, setFaturas] = useState([]);
   const [faturaSelecionada, setFaturaSelecionada] = useState(null);
   const [pagamento, setPagamento] = useState("");
   const [protestado, setProtestado] = useState("nao");
@@ -13,15 +13,17 @@ export default function AppFaturasLTSL() {
   const [mensagem, setMensagem] = useState("");
   const [numeroWhatsApp, setNumeroWhatsApp] = useState("");
 
-  useEffect(() => {
-    fetch("/faturas_ltsl_filtradas.json")
-      .then((res) => res.json())
-      .then((data) => setFaturas(data))
-      .catch((err) => console.error("Erro ao carregar faturas:", err));
-  }, []);
+  const nomesPermitidos = [
+    "VIVIAN MAGALHAES",
+    ...new Set(faturas.map(f => f.Vendedor.toUpperCase()))
+  ];
 
   const handleLogin = () => {
     if (!usuario) return alert("Informe seu nome");
+    if (!nomesPermitidos.includes(usuario.toUpperCase())) {
+      alert("Usuário sem permissão de acesso.");
+      return;
+    }
     setLogado(true);
   };
 
@@ -66,6 +68,8 @@ export default function AppFaturasLTSL() {
 
   return (
     <div style={{ padding: 24, fontFamily: "sans-serif" }}>
+      <img src="/logo.png" alt="Logo LTSL" style={{ width: 180, marginBottom: 24 }} />
+
       {!logado ? (
         <div style={{ maxWidth: 400, margin: "100px auto", textAlign: "center" }}>
           <h2>Login LTSL</h2>
@@ -81,7 +85,9 @@ export default function AppFaturasLTSL() {
         </div>
       ) : (
         <div>
+          <button onClick={() => setLogado(false)} style={{ marginBottom: 20 }}>← Voltar</button>
           <h2>Faturas - {usuario}</h2>
+
           {faturaSelecionada && (
             <div style={{ background: "#f9f9f9", padding: 16, marginBottom: 24, borderRadius: 8 }}>
               <h3>Fatura: {faturaSelecionada.Fatura}</h3>
