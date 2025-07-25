@@ -1,5 +1,3 @@
-// App completo com login, painel filtrado e cálculo de fatura atualizado com envio via WhatsApp, com layout, logo, botão de voltar, filtros, colunas extras e gráficos
-
 "use client";
 
 import { useEffect, useState } from "react";
