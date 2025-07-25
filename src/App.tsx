@@ -1,5 +1,3 @@
-// Estrutura inicial do app com login simples e painel de faturas filtradas
-
 "use client";
 
 import { useState } from "react";
@@ -76,5 +74,3 @@ export default function AppFaturasLTSL() {
 
 const th = { border: "1px solid #ccc", padding: 8, background: "#f0f0f0" };
 const td = { border: "1px solid #ccc", padding: 8 };
-
-// OBS: O próximo passo é conectar o botão "Calcular" ao formulário de cálculo + mensagem
