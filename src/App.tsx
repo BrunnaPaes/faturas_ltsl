@@ -2,9 +2,8 @@
 import { useEffect, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
-// COMPONENTE PRINCIPAL
 export default function AppFaturasLTSL() {
-  // ESTADOS PRINCIPAIS
+  // ESTADOS
   const [usuario, setUsuario] = useState("");
   const [logado, setLogado] = useState(false);
   const [faturas, setFaturas] = useState([]);
@@ -16,13 +15,19 @@ export default function AppFaturasLTSL() {
   const [numeroWhatsApp, setNumeroWhatsApp] = useState("");
   const [pagina, setPagina] = useState("painel");
 
-  // FILTROS POR COLUNA
+  // FILTROS
   const [filtroCliente, setFiltroCliente] = useState("");
   const [filtroVendedor, setFiltroVendedor] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("");
   const [filtroDominio, setFiltroDominio] = useState("");
 
-  // CARREGA DADOS
+  // ESTILOS
+  const thStyle = { padding: "7px 10px", background: "#e7e7e7", borderBottom: "2px solid #ddd" };
+  const tdStyle = { padding: "6px 8px", borderBottom: "1px solid #eee" };
+  const inputStyle = { width: 180, minWidth: 140, padding: 8, margin: "8px 0", border: "1px solid #ccc", borderRadius: 4, fontSize: 14 };
+  const botao = { width: "100%", padding: 10, backgroundColor: "#0070f3", color: "#fff", border: "none", borderRadius: 4, fontWeight: "bold", marginTop: 10 };
+
+  // CARREGA FATURAS
   useEffect(() => {
     fetch("/faturas_ltsl_filtradas.json")
       .then(res => res.json())
@@ -30,7 +35,7 @@ export default function AppFaturasLTSL() {
       .catch(() => alert("Erro ao carregar faturas!"));
   }, []);
 
-  // LISTAS PARA FILTROS
+  // LISTAS FILTROS
   const vendedores = [...new Set(faturas.map(f => f.Vendedor).filter(Boolean))];
   const statusLista = [...new Set(faturas.map(f => f.Status).filter(Boolean))];
   const dominiosLista = [...new Set(faturas.map(f => f.Dominio).filter(Boolean))];
@@ -50,13 +55,11 @@ export default function AppFaturasLTSL() {
     setPagina("painel");
   };
 
-  // FILTRAGEM DAS FATURAS
+  // FATURAS FILTRADAS
   const hoje = new Date();
   const faturasDoUsuario = usuario.toUpperCase() === "VIVIAN MAGALHAES"
     ? faturas
     : faturas.filter(f => f.Vendedor?.toUpperCase() === usuario.toUpperCase());
-
-  // FILTROS POR COLUNA
   const faturasFiltradas = faturasDoUsuario
     .filter(f => f.Cliente?.toLowerCase().includes(filtroCliente.toLowerCase()))
     .filter(f => !filtroVendedor || f.Vendedor === filtroVendedor)
@@ -81,7 +84,7 @@ export default function AppFaturasLTSL() {
   const totalAtrasado = faturasDoUsuario.reduce((acc, f) => acc + (calcularDiasAtraso(f.Vencimento) > 0 ? parseFloat(String(f.Saldo).replace(',', '.')) || 0 : 0), 0);
   const totalAVencer = faturasDoUsuario.reduce((acc, f) => acc + (calcularDiasAtraso(f.Vencimento) === 0 ? parseFloat(String(f.Saldo).replace(',', '.')) || 0 : 0), 0);
 
-  // CÁLCULO MENSAGEM
+  // CALCULA MENSAGEM
   const calcularValorAtualizado = () => {
     if (!faturaSelecionada || !pagamento) {
       alert("Informe a data de pagamento e selecione uma fatura.");
@@ -116,11 +119,10 @@ export default function AppFaturasLTSL() {
     window.open(`https://wa.me/55${numero}?text=${texto}`, "_blank");
   };
 
-  // VISUAL
+  // RETORNO JSX
   return (
     <div style={{ padding: 24, fontFamily: "sans-serif", background: "#f9f9fb", minHeight: "100vh" }}>
       <img src="/logo.png" alt="Logo LTSL" style={{ width: 180, marginBottom: 24, display: "block", marginLeft: "auto", marginRight: "auto" }} />
-
       {!logado ? (
         <div style={{ maxWidth: 400, margin: "100px auto", textAlign: "center", background: "#fff", padding: 24, borderRadius: 10, boxShadow: "0 2px 8px #0001" }}>
           <h2>Login LTSL</h2>
@@ -136,9 +138,7 @@ export default function AppFaturasLTSL() {
         </div>
       ) : pagina === "painel" ? (
         <div>
-          {/* PAINEL */}
           <h2 style={{ marginBottom: 0 }}>Faturas - {usuario.toUpperCase()}</h2>
-
           {/* GRÁFICOS */}
           <div style={{ display: 'flex', gap: 24, margin: "30px 0 16px" }}>
             <div style={{ flex: 1, background: "#fff", borderRadius: 8, padding: 16, boxShadow: "0 2px 8px #0001" }}>
@@ -171,8 +171,7 @@ export default function AppFaturasLTSL() {
               </div>
             </div>
           </div>
-
-          {/* FILTROS POR COLUNA */}
+          {/* FILTROS */}
           <div style={{ display: "flex", gap: 10, marginBottom: 18, flexWrap: "wrap" }}>
             <input
               type="text"
@@ -194,35 +193,34 @@ export default function AppFaturasLTSL() {
               {dominiosLista.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
           </div>
-
           {/* TABELA */}
           <div style={{ overflowX: "auto", marginBottom: 24 }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14, background: "#fff", borderRadius: 8, boxShadow: "0 2px 8px #0001" }}>
               <thead>
                 <tr>
-                  <th style={th}>Cliente</th>
-                  <th style={th}>CNPJ</th>
-                  <th style={th}>Fatura</th>
-                  <th style={th}>Vencimento</th>
-                  <th style={th}>Valor</th>
-                  <th style={th}>Dias Atraso</th>
-                  <th style={th}>Status</th>
-                  <th style={th}>Vendedor</th>
-                  <th style={th}>Ação</th>
+                  <th style={thStyle}>Cliente</th>
+                  <th style={thStyle}>CNPJ</th>
+                  <th style={thStyle}>Fatura</th>
+                  <th style={thStyle}>Vencimento</th>
+                  <th style={thStyle}>Valor</th>
+                  <th style={thStyle}>Dias Atraso</th>
+                  <th style={thStyle}>Status</th>
+                  <th style={thStyle}>Vendedor</th>
+                  <th style={thStyle}>Ação</th>
                 </tr>
               </thead>
               <tbody>
                 {faturasFiltradas.map((f, i) => (
                   <tr key={i} style={{ background: calcularStatus(f.Vencimento) === "ATRASADA" ? "#ffeaea" : "#eaffea" }}>
-                    <td style={td}>{f.Cliente}</td>
-                    <td style={td}>{f.CNPJ}</td>
-                    <td style={td}>{f.Fatura}</td>
-                    <td style={td}>{new Date(f.Vencimento).toLocaleDateString("pt-BR")}</td>
-                    <td style={td}>R$ {parseFloat(String(f.Saldo).replace(",", "."))?.toFixed(2)}</td>
-                    <td style={td}>{calcularDiasAtraso(f.Vencimento)}</td>
-                    <td style={td}>{calcularStatus(f.Vencimento)}</td>
-                    <td style={td}>{f.Vendedor}</td>
-                    <td style={td}>
+                    <td style={tdStyle}>{f.Cliente}</td>
+                    <td style={tdStyle}>{f.CNPJ}</td>
+                    <td style={tdStyle}>{f.Fatura}</td>
+                    <td style={tdStyle}>{new Date(f.Vencimento).toLocaleDateString("pt-BR")}</td>
+                    <td style={tdStyle}>R$ {parseFloat(String(f.Saldo).replace(",", "."))?.toFixed(2)}</td>
+                    <td style={tdStyle}>{calcularDiasAtraso(f.Vencimento)}</td>
+                    <td style={tdStyle}>{calcularStatus(f.Vencimento)}</td>
+                    <td style={tdStyle}>{f.Vendedor}</td>
+                    <td style={tdStyle}>
                       <button
                         style={{ padding: "4px 10px", background: "#0070f3", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer" }}
                         onClick={() => {
@@ -243,7 +241,7 @@ export default function AppFaturasLTSL() {
           </div>
         </div>
       ) : (
-        // TELA DE CÁLCULO (DETALHE)
+        // TELA DE CÁLCULO
         <div style={{ background: "#fff", borderRadius: 8, boxShadow: "0 2px 8px #0001", padding: 18, margin: "0 auto", maxWidth: 600 }}>
           <button onClick={() => setPagina("painel")} style={{ marginBottom: 18, padding: 8, background: "#eee", border: "none", borderRadius: 4, cursor: "pointer" }}>← Voltar</button>
           {faturaSelecionada && (
@@ -254,21 +252,17 @@ export default function AppFaturasLTSL() {
               <p>Vencimento: {new Date(faturaSelecionada.Vencimento).toLocaleDateString("pt-BR")}</p>
               <label>Data de Pagamento:</label>
               <input type="date" value={pagamento} onChange={e => setPagamento(e.target.value)} style={inputStyle} />
-
               <label>Protestado?</label>
               <select value={protestado} onChange={e => setProtestado(e.target.value)} style={inputStyle}>
                 <option value="nao">Não</option>
                 <option value="sim">Sim</option>
               </select>
-
               <label>Domínio:</label>
               <select value={dominio} onChange={e => setDominio(e.target.value)} style={inputStyle}>
                 <option value="SBA">SBA</option>
                 <option value="SLU">SLU</option>
               </select>
-
               <button onClick={calcularValorAtualizado} style={botao}>Gerar Mensagem</button>
-
               {mensagem && (
                 <>
                   <label style={{ marginTop: 16 }}>Número WhatsApp (com DDD):</label>
@@ -289,24 +283,3 @@ export default function AppFaturasLTSL() {
     </div>
   );
 }
-
-// estilos auxiliares
-const inputStyle = {
-  width: 180,
-  minWidth: 140,
-  padding: 8,
-  margin: "8px 0",
-  border: "1px solid #ccc",
-  borderRadius: 4,
-  fontSize: 14,
-};
-const botao = {
-  width: "100%",
-  padding: 10,
-  backgroundColor: "#0070f3",
-  color: "#fff",
-  border: "none",
-  borderRadius: 4,
-  fontWeight: "bold",
-  marginTop: 10,
-};
