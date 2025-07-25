@@ -3,7 +3,14 @@
 "use client";
 
 import { useState } from "react";
-import faturas from "../data/faturas_ltsl_filtradas.json";
+const [faturas, setFaturas] = useState([]);
+
+useEffect(() => {
+  fetch("/faturas_ltsl_filtradas.json")
+    .then(res => res.json())
+    .then(data => setFaturas(data))
+    .catch(err => console.error("Erro ao carregar faturas:", err));
+}, []);
 
 export default function AppFaturasLTSL() {
   const [usuario, setUsuario] = useState("");
