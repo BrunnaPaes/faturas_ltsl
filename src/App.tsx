@@ -1,28 +1,25 @@
+// App completo com login, painel filtrado e cálculo de fatura atualizado com envio via WhatsApp, com layout, logo, botão de voltar, filtros, colunas extras e gráficos
+
 "use client";
 
 import { useEffect, useState } from "react";
+import faturas from "../data/faturas_ltsl_filtradas.json";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 export default function AppFaturasLTSL() {
   const [usuario, setUsuario] = useState("");
   const [logado, setLogado] = useState(false);
-  const [faturas, setFaturas] = useState([]);
   const [faturaSelecionada, setFaturaSelecionada] = useState(null);
   const [pagamento, setPagamento] = useState("");
   const [protestado, setProtestado] = useState("nao");
   const [dominio, setDominio] = useState("SBA");
   const [mensagem, setMensagem] = useState("");
   const [numeroWhatsApp, setNumeroWhatsApp] = useState("");
-
-  useEffect(() => {
-    fetch("/faturas_ltsl_filtradas.json")
-      .then(res => res.json())
-      .then(data => setFaturas(data))
-      .catch(() => alert("Erro ao carregar as faturas."));
-  }, []);
+  const [filtroCliente, setFiltroCliente] = useState("");
 
   const nomesPermitidos = [
     "VIVIAN MAGALHAES",
-    ...new Set(faturas.map(f => f.Vendedor.toUpperCase()))
+    ...new Set(faturas.map(f => f.Vendedor?.toUpperCase()))
   ];
 
   const handleLogin = () => {
@@ -34,16 +31,32 @@ export default function AppFaturasLTSL() {
     setLogado(true);
   };
 
+  const hoje = new Date();
+
   const faturasFiltradas = usuario.toUpperCase() === "VIVIAN MAGALHAES"
     ? faturas
-    : faturas.filter(f => f.Vendedor.toUpperCase() === usuario.toUpperCase());
+    : faturas.filter(f => f.Vendedor?.toUpperCase() === usuario.toUpperCase());
+
+  const faturasExibidas = faturasFiltradas.filter(f =>
+    f.Cliente.toLowerCase().includes(filtroCliente.toLowerCase())
+  );
+
+  const calcularDiasAtraso = (venc) => {
+    const vencimento = new Date(venc);
+    const diff = Math.floor((hoje - vencimento) / (1000 * 60 * 60 * 24));
+    return diff > 0 ? diff : 0;
+  };
+
+  const calcularStatus = (venc) => {
+    return calcularDiasAtraso(venc) > 0 ? "ATRASADA" : "LIQUIDADA";
+  };
 
   const calcularValorAtualizado = () => {
     if (!faturaSelecionada || !pagamento) {
       alert("Informe a data de pagamento e selecione uma fatura.");
       return;
     }
-    const valor = parseFloat(faturaSelecionada.Saldo);
+    const valor = parseFloat(faturaSelecionada.Saldo.replace(',', '.')) || 0;
     const dataVencimento = new Date(faturaSelecionada.Vencimento);
     const dataPagamento = new Date(pagamento);
     let diasAtraso = Math.floor((dataPagamento - dataVencimento) / (1000 * 60 * 60 * 24));
@@ -73,126 +86,42 @@ export default function AppFaturasLTSL() {
     window.open(`https://wa.me/55${numero}?text=${texto}`, "_blank");
   };
 
+  const topAtrasadas = [...faturasFiltradas]
+    .filter(f => calcularDiasAtraso(f.Vencimento) > 0)
+    .sort((a, b) => parseFloat(b.Saldo.replace(',', '.')) - parseFloat(a.Saldo.replace(',', '.')))
+    .slice(0, 5)
+    .map(f => ({ name: f.Cliente, valor: parseFloat(f.Saldo.replace(',', '.')) || 0 }));
+
+  const totalAtrasado = faturasFiltradas.reduce((acc, f) => acc + (calcularDiasAtraso(f.Vencimento) > 0 ? parseFloat(f.Saldo.replace(',', '.')) || 0 : 0), 0);
+  const totalAVencer = faturasFiltradas.reduce((acc, f) => acc + (calcularDiasAtraso(f.Vencimento) === 0 ? parseFloat(f.Saldo.replace(',', '.')) || 0 : 0), 0);
+
   return (
     <div style={{ padding: 24, fontFamily: "sans-serif" }}>
       <img src="/logo.png" alt="Logo LTSL" style={{ width: 180, marginBottom: 24 }} />
-
       {!logado ? (
         <div style={{ maxWidth: 400, margin: "100px auto", textAlign: "center" }}>
           <h2>Login LTSL</h2>
-          <input
-            placeholder="Digite seu nome"
-            value={usuario}
-            onChange={(e) => setUsuario(e.target.value)}
-            style={{ width: "100%", padding: 10, fontSize: 16 }}
-          />
-          <button onClick={handleLogin} style={{ marginTop: 12, padding: 10, width: "100%", background: "#0070f3", color: "#fff", border: "none", borderRadius: 4 }}>
-            Entrar
-          </button>
+          <input placeholder="Digite seu nome" value={usuario} onChange={(e) => setUsuario(e.target.value)} style={inputStyle} />
+          <button onClick={handleLogin} style={botao}>Entrar</button>
         </div>
       ) : (
         <div>
           <button onClick={() => setLogado(false)} style={{ marginBottom: 20 }}>← Voltar</button>
-          <h2>Faturas - {usuario}</h2>
+          <h2>Faturas - {usuario.toUpperCase()}</h2>
 
-          {faturaSelecionada && (
-            <div style={{ background: "#f9f9f9", padding: 16, marginBottom: 24, borderRadius: 8 }}>
-              <h3>Fatura: {faturaSelecionada.Fatura}</h3>
-              <p>Cliente: {faturaSelecionada.Cliente}</p>
-              <p>Valor original: R$ {parseFloat(faturaSelecionada.Saldo).toFixed(2)}</p>
-              <p>Vencimento: {new Date(faturaSelecionada.Vencimento).toLocaleDateString("pt-BR")}</p>
-
-              <label>Data de Pagamento:</label>
-              <input type="date" value={pagamento} onChange={(e) => setPagamento(e.target.value)} style={inputStyle} />
-
-              <label>Protestado?</label>
-              <select value={protestado} onChange={(e) => setProtestado(e.target.value)} style={inputStyle}>
-                <option value="nao">Não</option>
-                <option value="sim">Sim</option>
-              </select>
-
-              <label>Domínio:</label>
-              <select value={dominio} onChange={(e) => setDominio(e.target.value)} style={inputStyle}>
-                <option value="SBA">SBA</option>
-                <option value="SLU">SLU</option>
-              </select>
-
-              <button onClick={calcularValorAtualizado} style={botao}>Gerar Mensagem</button>
-
-              {mensagem && (
-                <>
-                  <label style={{ marginTop: 20 }}>Número WhatsApp (com DDD):</label>
-                  <input
-                    value={numeroWhatsApp}
-                    onChange={(e) => setNumeroWhatsApp(e.target.value)}
-                    placeholder="Ex: 41999998888"
-                    style={inputStyle}
-                  />
-                  <textarea readOnly value={mensagem} style={{ ...inputStyle, height: 160 }} />
-                  <button onClick={enviarWhatsApp} style={{ ...botao, backgroundColor: "#25D366" }}>Enviar via WhatsApp</button>
-                </>
-              )}
+          <div style={{ display: 'flex', gap: 24, marginBottom: 32 }}>
+            <div style={{ flex: 1 }}>
+              <h4>Top 5 Faturas Atrasadas</h4>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={topAtrasadas}>
+                  <XAxis dataKey="name" hide />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="valor" fill="#f00" />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
-          )}
-
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
-            <thead>
-              <tr>
-                <th style={th}>Cliente</th>
-                <th style={th}>CNPJ</th>
-                <th style={th}>Fatura</th>
-                <th style={th}>Vencimento</th>
-                <th style={th}>Valor</th>
-                <th style={th}>Ação</th>
-              </tr>
-            </thead>
-            <tbody>
-              {faturasFiltradas.map((f, i) => (
-                <tr key={i}>
-                  <td style={td}>{f.Cliente}</td>
-                  <td style={td}>{f.CNPJ}</td>
-                  <td style={td}>{f.Fatura}</td>
-                  <td style={td}>{new Date(f.Vencimento).toLocaleDateString("pt-BR")}</td>
-                  <td style={td}>R$ {parseFloat(f.Saldo).toFixed(2)}</td>
-                  <td style={td}>
-                    <button
-                      style={{ padding: "4px 8px", background: "#0070f3", color: "#fff", border: "none", borderRadius: 4 }}
-                      onClick={() => {
-                        setFaturaSelecionada(f);
-                        setMensagem("");
-                      }}
-                    >Calcular</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-}
-
-const inputStyle = {
-  width: "100%",
-  padding: 8,
-  margin: "8px 0",
-  border: "1px solid #ccc",
-  borderRadius: 4,
-  fontSize: 14,
-};
-
-const botao = {
-  width: "100%",
-  padding: 10,
-  backgroundColor: "#0070f3",
-  color: "#fff",
-  border: "none",
-  borderRadius: 4,
-  fontWeight: "bold",
-  marginTop: 10,
-};
-
-const th = { border: "1px solid #ccc", padding: 8, background: "#f0f0f0" };
-const td = { border: "1px solid #ccc", padding: 8 };
-
+            <div style={{ flex: 1 }}>
+              <h4>Resumo Total</h4>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={[{ tipo: "Atrasado", valor: totalAtrasado }, { tipo: "A Vencer", valor: totalAVencer }]}>
