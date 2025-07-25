@@ -122,7 +122,7 @@ export default function AppFaturasLTSL() {
   // RETORNO JSX
   return (
     <div style={{ padding: 24, fontFamily: "sans-serif", background: "#f9f9fb", minHeight: "100vh" }}>
-      <img src="/logo.png" alt="Logo LTSL" style={{ width: 180, marginBottom: 24, display: "block", marginLeft: "auto", marginRight: "auto" }} />
+      <img src="public/logo.png" alt="Logo LTSL" style={{ width: 180, marginBottom: 24, display: "block", marginLeft: "auto", marginRight: "auto" }} />
       {!logado ? (
         <div style={{ maxWidth: 400, margin: "100px auto", textAlign: "center", background: "#fff", padding: 24, borderRadius: 10, boxShadow: "0 2px 8px #0001" }}>
           <h2>Login LTSL</h2>
