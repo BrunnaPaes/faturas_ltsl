@@ -1,26 +1,24 @@
-// App completo com login, painel filtrado e cálculo de fatura atualizado com envio via WhatsApp
-
 "use client";
 
-import { useState } from "react";
-const [faturas, setFaturas] = useState([]);
-
-useEffect(() => {
-  fetch("/faturas_ltsl_filtradas.json")
-    .then(res => res.json())
-    .then(data => setFaturas(data))
-    .catch(err => console.error("Erro ao carregar faturas:", err));
-}, []);
+import { useEffect, useState } from "react";
 
 export default function AppFaturasLTSL() {
   const [usuario, setUsuario] = useState("");
   const [logado, setLogado] = useState(false);
+  const [faturas, setFaturas] = useState([]);
   const [faturaSelecionada, setFaturaSelecionada] = useState(null);
   const [pagamento, setPagamento] = useState("");
   const [protestado, setProtestado] = useState("nao");
   const [dominio, setDominio] = useState("SBA");
   const [mensagem, setMensagem] = useState("");
   const [numeroWhatsApp, setNumeroWhatsApp] = useState("");
+
+  useEffect(() => {
+    fetch("/faturas_ltsl_filtradas.json")
+      .then((res) => res.json())
+      .then((data) => setFaturas(data))
+      .catch((err) => console.error("Erro ao carregar faturas:", err));
+  }, []);
 
   const handleLogin = () => {
     if (!usuario) return alert("Informe seu nome");
@@ -84,7 +82,7 @@ export default function AppFaturasLTSL() {
       ) : (
         <div>
           <h2>Faturas - {usuario}</h2>
-          {faturaSelecionada ? (
+          {faturaSelecionada && (
             <div style={{ background: "#f9f9f9", padding: 16, marginBottom: 24, borderRadius: 8 }}>
               <h3>Fatura: {faturaSelecionada.Fatura}</h3>
               <p>Cliente: {faturaSelecionada.Cliente}</p>
@@ -122,7 +120,7 @@ export default function AppFaturasLTSL() {
                 </>
               )}
             </div>
-          ) : null}
+          )}
 
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
             <thead>
