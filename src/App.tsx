@@ -1,17 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import faturas from "public/faturas_ltsl_filtradas.json";
 
 export default function AppFaturasLTSL() {
   const [usuario, setUsuario] = useState("");
   const [logado, setLogado] = useState(false);
+  const [faturas, setFaturas] = useState([]);
   const [faturaSelecionada, setFaturaSelecionada] = useState(null);
   const [pagamento, setPagamento] = useState("");
   const [protestado, setProtestado] = useState("nao");
   const [dominio, setDominio] = useState("SBA");
   const [mensagem, setMensagem] = useState("");
   const [numeroWhatsApp, setNumeroWhatsApp] = useState("");
+
+  useEffect(() => {
+    fetch("/faturas_ltsl_filtradas.json")
+      .then(res => res.json())
+      .then(data => setFaturas(data))
+      .catch(() => alert("Erro ao carregar as faturas."));
+  }, []);
 
   const nomesPermitidos = [
     "VIVIAN MAGALHAES",
@@ -188,3 +195,4 @@ const botao = {
 
 const th = { border: "1px solid #ccc", padding: 8, background: "#f0f0f0" };
 const td = { border: "1px solid #ccc", padding: 8 };
+
