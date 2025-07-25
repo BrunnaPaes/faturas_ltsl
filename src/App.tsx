@@ -24,8 +24,8 @@ export default function AppFaturasLTSL() {
   // ESTILOS
   const thStyle = { padding: "7px 10px", background: "#e7e7e7", borderBottom: "2px solid #ddd" };
   const tdStyle = { padding: "6px 8px", borderBottom: "1px solid #eee" };
-  const inputStyle = { width: 180, minWidth: 140, padding: 8, margin: "8px 0", border: "1px solid #ccc", borderRadius: 4, fontSize: 14 };
-  const botao = { width: "100%", padding: 10, backgroundColor: "#0070f3", color: "#fff", border: "none", borderRadius: 4, fontWeight: "bold", marginTop: 10 };
+  const inputStyle = { width: "100%", padding: 10, border: "1px solid #ccc", borderRadius: 4, fontSize: 14, margin: "6px 0" };
+  const botao = { width: "100%", padding: 14, backgroundColor: "#0070f3", color: "#fff", border: "none", borderRadius: 6, fontWeight: "bold", marginTop: 8, fontSize: 16 };
 
   // CARREGA FATURAS
   useEffect(() => {
@@ -119,10 +119,19 @@ export default function AppFaturasLTSL() {
     window.open(`https://wa.me/55${numero}?text=${texto}`, "_blank");
   };
 
-  // RETORNO JSX
+  // ----------------- JSX -----------------
   return (
     <div style={{ padding: 24, fontFamily: "sans-serif", background: "#f9f9fb", minHeight: "100vh" }}>
-      <img src="public/logo.png" style={{ width: 180, marginBottom: 24, display: "block", marginLeft: "auto", marginRight: "auto" }} />
+      {/* LOGO */}
+      <div style={{ textAlign: "center", marginBottom: 20 }}>
+        <img
+          src="/logo.png"
+          alt="Logo LTSL"
+          style={{ width: 180, height: "auto", margin: "0 auto", display: "block" }}
+          onError={e => e.currentTarget.style.display = 'none'} // oculta se não encontrar
+        />
+      </div>
+      {/* LOGIN */}
       {!logado ? (
         <div style={{ maxWidth: 400, margin: "100px auto", textAlign: "center", background: "#fff", padding: 24, borderRadius: 10, boxShadow: "0 2px 8px #0001" }}>
           <h2>Login LTSL</h2>
@@ -140,7 +149,7 @@ export default function AppFaturasLTSL() {
         <div>
           <h2 style={{ marginBottom: 0 }}>Faturas - {usuario.toUpperCase()}</h2>
           {/* GRÁFICOS */}
-          <div style={{ display: 'flex', gap: 24, margin: "30px 0 16px" }}>
+          <div style={{ display: 'flex', gap: 24, margin: "30px 0 16px", flexWrap: "wrap" }}>
             <div style={{ flex: 1, background: "#fff", borderRadius: 8, padding: 16, boxShadow: "0 2px 8px #0001" }}>
               <h4 style={{ marginBottom: 8 }}>Top 5 Faturas Atrasadas</h4>
               <ResponsiveContainer width="100%" height={160}>
@@ -178,17 +187,17 @@ export default function AppFaturasLTSL() {
               placeholder="Filtrar Cliente"
               value={filtroCliente}
               onChange={e => setFiltroCliente(e.target.value)}
-              style={inputStyle}
+              style={{ ...inputStyle, maxWidth: 200 }}
             />
-            <select value={filtroVendedor} onChange={e => setFiltroVendedor(e.target.value)} style={inputStyle}>
+            <select value={filtroVendedor} onChange={e => setFiltroVendedor(e.target.value)} style={{ ...inputStyle, maxWidth: 180 }}>
               <option value="">Todos Vendedores</option>
               {vendedores.map(v => <option key={v} value={v}>{v}</option>)}
             </select>
-            <select value={filtroStatus} onChange={e => setFiltroStatus(e.target.value)} style={inputStyle}>
+            <select value={filtroStatus} onChange={e => setFiltroStatus(e.target.value)} style={{ ...inputStyle, maxWidth: 140 }}>
               <option value="">Todos Status</option>
               {statusLista.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
-            <select value={filtroDominio} onChange={e => setFiltroDominio(e.target.value)} style={inputStyle}>
+            <select value={filtroDominio} onChange={e => setFiltroDominio(e.target.value)} style={{ ...inputStyle, maxWidth: 120 }}>
               <option value="">Todos Domínios</option>
               {dominiosLista.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
@@ -241,39 +250,119 @@ export default function AppFaturasLTSL() {
           </div>
         </div>
       ) : (
-        // TELA DE CÁLCULO
-        <div style={{ background: "#fff", borderRadius: 8, boxShadow: "0 2px 8px #0001", padding: 18, margin: "0 auto", maxWidth: 600 }}>
-          <button onClick={() => setPagina("painel")} style={{ marginBottom: 18, padding: 8, background: "#eee", border: "none", borderRadius: 4, cursor: "pointer" }}>← Voltar</button>
+        // TELA DE CÁLCULO BONITA
+        <div style={{
+          background: "#fff",
+          borderRadius: 10,
+          boxShadow: "0 2px 8px #0001",
+          padding: 32,
+          margin: "0 auto",
+          maxWidth: 520,
+          marginTop: 30
+        }}>
+          <button
+            onClick={() => setPagina("painel")}
+            style={{
+              marginBottom: 16,
+              padding: "8px 20px",
+              background: "#eee",
+              border: "none",
+              borderRadius: 4,
+              cursor: "pointer",
+              fontWeight: 600
+            }}>
+            ← Voltar
+          </button>
           {faturaSelecionada && (
             <>
-              <h3>Fatura: {faturaSelecionada.Fatura}</h3>
-              <p>Cliente: {faturaSelecionada.Cliente}</p>
-              <p>Valor original: R$ {parseFloat(String(faturaSelecionada.Saldo).replace(",", "."))?.toFixed(2)}</p>
-              <p>Vencimento: {new Date(faturaSelecionada.Vencimento).toLocaleDateString("pt-BR")}</p>
-              <label>Data de Pagamento:</label>
-              <input type="date" value={pagamento} onChange={e => setPagamento(e.target.value)} style={inputStyle} />
-              <label>Protestado?</label>
-              <select value={protestado} onChange={e => setProtestado(e.target.value)} style={inputStyle}>
-                <option value="nao">Não</option>
-                <option value="sim">Sim</option>
-              </select>
-              <label>Domínio:</label>
-              <select value={dominio} onChange={e => setDominio(e.target.value)} style={inputStyle}>
-                <option value="SBA">SBA</option>
-                <option value="SLU">SLU</option>
-              </select>
-              <button onClick={calcularValorAtualizado} style={botao}>Gerar Mensagem</button>
-              {mensagem && (
-                <>
-                  <label style={{ marginTop: 16 }}>Número WhatsApp (com DDD):</label>
+              <h2 style={{ margin: "12px 0 4px", fontWeight: 700 }}>Fatura: {faturaSelecionada.Fatura}</h2>
+              <div style={{ marginBottom: 18 }}>
+                <div style={{ fontSize: 17, margin: "5px 0" }}>
+                  <strong>Cliente:</strong> {faturaSelecionada.Cliente}
+                </div>
+                <div style={{ fontSize: 16 }}>
+                  <strong>Valor original:</strong> R$ {parseFloat(String(faturaSelecionada.Saldo).replace(",", ".")).toFixed(2)}
+                </div>
+                <div style={{ fontSize: 16 }}>
+                  <strong>Vencimento:</strong> {new Date(faturaSelecionada.Vencimento).toLocaleDateString("pt-BR")}
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
+                <div style={{ flex: 2 }}>
+                  <label style={{ fontWeight: 500 }}>Data de Pagamento:</label>
                   <input
-                    value={numeroWhatsApp}
-                    onChange={e => setNumeroWhatsApp(e.target.value)}
-                    placeholder="Ex: 41999998888"
+                    type="date"
+                    value={pagamento}
+                    onChange={e => setPagamento(e.target.value)}
                     style={inputStyle}
                   />
-                  <textarea readOnly value={mensagem} style={{ ...inputStyle, height: 160 }} />
-                  <button onClick={enviarWhatsApp} style={{ ...botao, backgroundColor: "#25D366", marginTop: 4 }}>Enviar via WhatsApp</button>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontWeight: 500 }}>Protestado?</label>
+                  <select
+                    value={protestado}
+                    onChange={e => setProtestado(e.target.value)}
+                    style={inputStyle}>
+                    <option value="nao">Não</option>
+                    <option value="sim">Sim</option>
+                  </select>
+                </div>
+              </div>
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ fontWeight: 500 }}>Domínio:</label>
+                <select
+                  value={dominio}
+                  onChange={e => setDominio(e.target.value)}
+                  style={inputStyle}>
+                  <option value="SBA">SBA</option>
+                  <option value="SLU">SLU</option>
+                </select>
+              </div>
+              <button
+                onClick={calcularValorAtualizado}
+                style={botao}>
+                Gerar Mensagem
+              </button>
+              {mensagem && (
+                <>
+                  <div style={{ marginTop: 20 }}>
+                    <label style={{ fontWeight: 500 }}>Número WhatsApp (com DDD):</label>
+                    <input
+                      value={numeroWhatsApp}
+                      onChange={e => setNumeroWhatsApp(e.target.value)}
+                      placeholder="Ex: 41999998888"
+                      style={inputStyle}
+                    />
+                  </div>
+                  <textarea
+                    readOnly
+                    value={mensagem}
+                    style={{
+                      width: "100%",
+                      height: 140,
+                      padding: 12,
+                      border: "1px solid #ddd",
+                      borderRadius: 6,
+                      marginTop: 10,
+                      fontSize: 14,
+                      fontFamily: "inherit"
+                    }}
+                  />
+                  <button
+                    onClick={enviarWhatsApp}
+                    style={{
+                      width: "100%",
+                      padding: 14,
+                      backgroundColor: "#25D366",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: 6,
+                      fontWeight: 700,
+                      fontSize: 16,
+                      marginTop: 6
+                    }}>
+                    Enviar via WhatsApp
+                  </button>
                 </>
               )}
             </>
