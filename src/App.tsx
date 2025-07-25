@@ -8,6 +8,7 @@ export default function FaturaLTSL() {
   const [protestado, setProtestado] = useState("nao");
   const [dominio, setDominio] = useState("SBA");
   const [mensagem, setMensagem] = useState("");
+  const [numeroWhatsApp, setNumeroWhatsApp] = useState("");
   const textareaRef = useRef(null);
 
   function calcularValorAtualizado() {
@@ -50,6 +51,17 @@ export default function FaturaLTSL() {
     const msg = `Prezado cliente,\n\nVerificamos que a fatura nº ${numeroFatura}, com vencimento em ${vencimentoFormatado}, encontra-se em aberto até a presente data.\n\nInformamos que o valor atualizado para quitação é de ${valorFormatado}, já com a incidência de multa e juros conforme previsto contratualmente.\n\nSegue abaixo os dados bancários para pagamento:\n\n${dadosBancarios}\n\nCaso o pagamento já tenha sido realizado, por gentileza, desconsidere esta mensagem.\n\nAtenciosamente,\nDepartamento Financeiro – LTSL`;
 
     setMensagem(msg);
+  }
+
+  function gerarLinkWhatsApp() {
+    if (!numeroWhatsApp || !mensagem) {
+      alert("Informe o número do cliente e gere a mensagem antes de enviar.");
+      return;
+    }
+    const numeroFormatado = numeroWhatsApp.replace(/\D/g, "");
+    const texto = encodeURIComponent(mensagem);
+    const link = `https://wa.me/55${numeroFormatado}?text=${texto}`;
+    window.open(link, "_blank");
   }
 
   return (
@@ -108,6 +120,16 @@ export default function FaturaLTSL() {
             readOnly
             style={{ ...estiloInput, height: 200 }}
           />
+
+          <label>Número do WhatsApp (somente números, com DDD)</label>
+          <input
+            value={numeroWhatsApp}
+            onChange={(e) => setNumeroWhatsApp(e.target.value)}
+            placeholder="Ex: 41999998888"
+            style={estiloInput}
+          />
+
+          <button onClick={gerarLinkWhatsApp} style={estiloBotaoVerde}>Enviar via WhatsApp</button>
         </>
       )}
     </div>
@@ -133,4 +155,10 @@ const estiloBotao = {
   fontWeight: "bold",
   cursor: "pointer",
   marginTop: 10
+};
+
+const estiloBotaoVerde = {
+  ...estiloBotao,
+  backgroundColor: "#25D366", // Cor do WhatsApp
+  marginTop: 10,
 };
