@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 
 // Função para converter o JSON do Google Sheets em array de objetos
 function parseGoogleSheetJSON(data) {
-  const json = JSON.parse(data.substring(47).replace(/;$/, "")); // remove o prefixo e sufixo
+  const json = JSON.parse(data.substring(47).replace(/;$/, ""));
   const cols = json.table.cols.map(col => col.label || "");
   const rows = json.table.rows
     .filter(row => row.c && row.c.length)
@@ -11,7 +11,7 @@ function parseGoogleSheetJSON(data) {
         row.c.map((cell, i) => [cols[i], cell ? (cell.f ?? cell.v ?? "") : ""])
       )
     );
-  // Remove linhas que são cabeçalho ou resumo (tipo "CONTROLE DE COBRANÇA")
+  // Remove linhas que são cabeçalho ou vazias
   return rows.filter(obj =>
     obj["CLIENTE"] && obj["FATURA"] && obj["SALDO"] !== ""
   );
@@ -81,7 +81,7 @@ export default function App() {
       </div>
       <div style={{ maxWidth: 1200, margin: "32px auto 0 auto" }}>
         <h2>
-          Faturas - <span style={{ color: "#111", fontWeight: 700 }}>LTSL</span>
+          Faturas - <span style={{ color: "#111", fontWeight: 700 }}>VIVIAN MAGALHAES</span>
         </h2>
         {/* Gráficos/Resumo */}
         <div style={{ display: "flex", gap: 28, marginBottom: 20 }}>
