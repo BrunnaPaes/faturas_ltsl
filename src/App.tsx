@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-// Função para converter o JSON do Google Sheets em array de objetos
+// Função para converter o JSON bruto do Google Sheets
 function parseGoogleSheetJSON(data) {
   const json = JSON.parse(data.substring(47).replace(/;$/, ""));
   const cols = json.table.cols.map(col => col.label || "");
@@ -11,10 +11,8 @@ function parseGoogleSheetJSON(data) {
         row.c.map((cell, i) => [cols[i], cell ? (cell.f ?? cell.v ?? "") : ""])
       )
     );
-  // Remove linhas que são cabeçalho ou vazias
-  return rows.filter(obj =>
-    obj["CLIENTE"] && obj["FATURA"] && obj["SALDO"] !== ""
-  );
+  // Remove cabeçalhos e linhas vazias
+  return rows.filter(obj => obj["FATURA"] && obj["CLIENTE"] && obj["SALDO"]);
 }
 
 export default function App() {
@@ -25,7 +23,6 @@ export default function App() {
   const [filtroCliente, setFiltroCliente] = useState("");
   const [filtroVendedor, setFiltroVendedor] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("");
-  const [filtroDominio, setFiltroDominio] = useState("");
 
   useEffect(() => {
     setCarregando(true);
@@ -43,25 +40,27 @@ export default function App() {
       });
   }, []);
 
-  // Gera as opções de filtro a partir dos dados reais
+  // Opções dos filtros
   const vendedores = [...new Set(faturas.map(f => f["VENDEDOR"]).filter(Boolean))];
-  const dominios = [...new Set(faturas.map(f => f["DOM"]).filter(Boolean))];
   const statusList = [...new Set(faturas.map(f => f["LIQUIDADA/ATRASADA"]).filter(Boolean))];
 
   // Filtro aplicado
   const faturasFiltradas = faturas.filter(f =>
     (filtroCliente === "" || (f["CLIENTE"] && f["CLIENTE"].toLowerCase().includes(filtroCliente.toLowerCase()))) &&
     (filtroVendedor === "" || f["VENDEDOR"] === filtroVendedor) &&
-    (filtroDominio === "" || f["DOM"] === filtroDominio) &&
     (filtroStatus === "" || f["LIQUIDADA/ATRASADA"] === filtroStatus)
   );
 
-  // Gráficos/resumo
+  // Top 5 faturas atrasadas
   const atrasadas = faturasFiltradas.filter(f => String(f["LIQUIDADA/ATRASADA"]).toUpperCase().includes("ATRASADA"));
   const topAtrasadas = atrasadas
-    .sort((a, b) => (Number(String(b["SALDO"]).replace(".", "").replace(",", ".") || 0) - Number(String(a["SALDO"]).replace(".", "").replace(",", ".") || 0)))
+    .sort((a, b) =>
+      Number(String(b["SALDO"]).replace(".", "").replace(",", ".") || 0) -
+      Number(String(a["SALDO"]).replace(".", "").replace(",", ".") || 0)
+    )
     .slice(0, 5);
 
+  // Totais
   const totalAtrasado = atrasadas.reduce(
     (acc, f) => acc + (Number(String(f["SALDO"]).replace(".", "").replace(",", ".") || 0)), 0
   );
@@ -71,7 +70,6 @@ export default function App() {
 
   return (
     <div style={{ background: "#f9f9fb", minHeight: "100vh", fontFamily: "sans-serif", padding: 0 }}>
-      {/* LOGO */}
       <div style={{ textAlign: "center", marginTop: 24 }}>
         <img
           src="https://i.imgur.com/sgO3fqf.png"
@@ -79,13 +77,12 @@ export default function App() {
           style={{ width: 180, margin: "0 auto", display: "block" }}
         />
       </div>
-      <div style={{ maxWidth: 1200, margin: "32px auto 0 auto" }}>
+      <div style={{ maxWidth: 1100, margin: "32px auto 0 auto" }}>
         <h2>
-          Faturas - <span style={{ color: "#111", fontWeight: 700 }}>VIVIAN MAGALHAES</span>
+          Faturas - <span style={{ color: "#111", fontWeight: 700 }}>LTSL</span>
         </h2>
         {/* Gráficos/Resumo */}
         <div style={{ display: "flex", gap: 28, marginBottom: 20 }}>
-          {/* Top 5 faturas atrasadas */}
           <div style={{ flex: 1, background: "#fff", borderRadius: 12, padding: 20, boxShadow: "0 2px 8px #eee" }}>
             <b>Top 5 Faturas Atrasadas</b>
             <ul style={{ margin: 12 }}>
@@ -94,14 +91,13 @@ export default function App() {
               ) : (
                 topAtrasadas.map((f, i) => (
                   <li key={i}>
-                    <b>{f["CLIENTE"]}</b> — {f["FATURA"]} — R${" "}
+                    <b>{f["CLIENTE"]}</b> — {f["FATURA"]} — R$&nbsp;
                     {Number(String(f["SALDO"]).replace(".", "").replace(",", ".") || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                   </li>
                 ))
               )}
             </ul>
           </div>
-          {/* Resumo total */}
           <div style={{ flex: 1, background: "#fff", borderRadius: 12, padding: 20, boxShadow: "0 2px 8px #eee" }}>
             <b>Resumo Total</b>
             <div style={{ marginTop: 24, fontSize: 17 }}>
@@ -131,12 +127,8 @@ export default function App() {
             <option value="">Todos Status</option>
             {statusList.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
-          <select value={filtroDominio} onChange={e => setFiltroDominio(e.target.value)} style={{ flex: 1, padding: 7, borderRadius: 5, border: "1px solid #ccc" }}>
-            <option value="">Todos Domínios</option>
-            {dominios.map(d => <option key={d} value={d}>{d}</option>)}
-          </select>
         </div>
-        {/* Tabela */}
+        {/* Tabela enxuta */}
         <div style={{
           background: "#fff", borderRadius: 12, boxShadow: "0 2px 8px #eee",
           overflowX: "auto", padding: 8, marginBottom: 40
@@ -144,38 +136,34 @@ export default function App() {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 15 }}>
             <thead>
               <tr style={{ background: "#f4f4f4", fontWeight: 700 }}>
-                <th>Cliente</th>
-                <th>CNPJ</th>
                 <th>Fatura</th>
+                <th>CNPJ/CPF</th>
+                <th>Cliente</th>
+                <th>Vendedor</th>
                 <th>Vencimento</th>
                 <th>Valor</th>
                 <th>Dias Atraso</th>
                 <th>Status</th>
-                <th>Vendedor</th>
-                <th>Ação</th>
               </tr>
             </thead>
             <tbody>
               {faturasFiltradas.map((f, i) => (
                 <tr key={i}>
-                  <td>{f["CLIENTE"]}</td>
-                  <td>{f["CNPJ/CPF"]}</td>
                   <td>{f["FATURA"]}</td>
-                  <td>{f["VENCIMEN"]}</td>
-                  <td>R$ {Number(String(f["SALDO"]).replace(".", "").replace(",", ".") || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                  <td>{f["CNPJ/CPF"]}</td>
+                  <td>{f["CLIENTE"]}</td>
+                  <td>{f["VENDEDOR"]}</td>
+                  <td>{f["VENCIMEN"] || f["VENCIMENTO"]}</td>
+                  <td>
+                    R$ {Number(String(f["SALDO"]).replace(".", "").replace(",", ".") || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </td>
                   <td>{f["DIAS ATRASO"]}</td>
                   <td>{f["LIQUIDADA/ATRASADA"]}</td>
-                  <td>{f["VENDEDOR"]}</td>
-                  <td>
-                    <button style={{ background: "#1a73e8", color: "#fff", border: 0, borderRadius: 5, padding: "3px 13px", cursor: "pointer" }}>
-                      Calcular
-                    </button>
-                  </td>
                 </tr>
               ))}
               {faturasFiltradas.length === 0 && (
                 <tr>
-                  <td colSpan={9} style={{ textAlign: "center", color: "#888", padding: 32 }}>
+                  <td colSpan={8} style={{ textAlign: "center", color: "#888", padding: 32 }}>
                     Nenhum registro encontrado
                   </td>
                 </tr>
