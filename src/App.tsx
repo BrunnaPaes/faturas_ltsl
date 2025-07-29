@@ -2,8 +2,10 @@
 import { useEffect, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
+// URL do Google Sheets como JSON
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/1-Td1UT7x9aKyCf_PHr9WZ7D3ZJNFxpMZ/gviz/tq?tqx=out:json";
+
 export default function AppFaturasLTSL() {
-  // ESTADOS
   const [usuario, setUsuario] = useState("");
   const [logado, setLogado] = useState(false);
   const [faturas, setFaturas] = useState([]);
@@ -27,20 +29,27 @@ export default function AppFaturasLTSL() {
   const inputStyle = { width: "100%", padding: 10, border: "1px solid #ccc", borderRadius: 4, fontSize: 14, margin: "6px 0" };
   const botao = { width: "100%", padding: 14, backgroundColor: "#0070f3", color: "#fff", border: "none", borderRadius: 6, fontWeight: "bold", marginTop: 8, fontSize: 16 };
 
-  // CARREGA FATURAS
+  // --- Carrega do Google Sheets ---
   useEffect(() => {
-    fetch("/faturas_ltsl_filtradas.json")
-      .then(res => res.json())
-      .then(data => setFaturas(data))
-      .catch(() => alert("Erro ao carregar faturas!"));
+    fetch(SHEET_URL)
+      .then(r => r.text())
+      .then(txt => {
+        const json = JSON.parse(txt.substring(47).slice(0, -2));
+        const cols = json.table.cols.map(c => c.label);
+        const rows = json.table.rows.map(row =>
+          Object.fromEntries(row.c.map((v, i) => [cols[i], v ? v.v : ""]))
+        );
+        setFaturas(rows);
+      })
+      .catch(() => alert("Erro ao carregar faturas do Google Sheets!"));
   }, []);
 
-  // LISTAS FILTROS
+  // --- LISTAS FILTROS DINÂMICOS ---
   const vendedores = [...new Set(faturas.map(f => f.Vendedor).filter(Boolean))];
   const statusLista = [...new Set(faturas.map(f => f.Status).filter(Boolean))];
   const dominiosLista = [...new Set(faturas.map(f => f.Dominio).filter(Boolean))];
 
-  // LOGIN
+  // --- LOGIN ---
   const nomesPermitidos = [
     "VIVIAN MAGALHAES",
     ...new Set(faturas.map(f => f.Vendedor?.toUpperCase()))
@@ -55,7 +64,7 @@ export default function AppFaturasLTSL() {
     setPagina("painel");
   };
 
-  // FATURAS FILTRADAS
+  // --- FATURAS FILTRADAS ---
   const hoje = new Date();
   const faturasDoUsuario = usuario.toUpperCase() === "VIVIAN MAGALHAES"
     ? faturas
@@ -66,7 +75,7 @@ export default function AppFaturasLTSL() {
     .filter(f => !filtroStatus || f.Status === filtroStatus)
     .filter(f => !filtroDominio || f.Dominio === filtroDominio);
 
-  // COLUNAS CALCULADAS
+  // --- COLUNAS CALCULADAS ---
   const calcularDiasAtraso = venc => {
     const vencimento = new Date(venc);
     const diff = Math.floor((hoje - vencimento) / (1000 * 60 * 60 * 24));
@@ -74,7 +83,7 @@ export default function AppFaturasLTSL() {
   };
   const calcularStatus = venc => (calcularDiasAtraso(venc) > 0 ? "ATRASADA" : "LIQUIDADA");
 
-  // GRÁFICOS
+  // --- GRÁFICOS ---
   const topAtrasadas = [...faturasDoUsuario]
     .filter(f => calcularDiasAtraso(f.Vencimento) > 0)
     .sort((a, b) => parseFloat(String(b.Saldo).replace(',', '.')) - parseFloat(String(a.Saldo).replace(',', '.')))
@@ -84,7 +93,7 @@ export default function AppFaturasLTSL() {
   const totalAtrasado = faturasDoUsuario.reduce((acc, f) => acc + (calcularDiasAtraso(f.Vencimento) > 0 ? parseFloat(String(f.Saldo).replace(',', '.')) || 0 : 0), 0);
   const totalAVencer = faturasDoUsuario.reduce((acc, f) => acc + (calcularDiasAtraso(f.Vencimento) === 0 ? parseFloat(String(f.Saldo).replace(',', '.')) || 0 : 0), 0);
 
-  // CALCULA MENSAGEM
+  // --- CALCULA MENSAGEM ---
   const calcularValorAtualizado = () => {
     if (!faturaSelecionada || !pagamento) {
       alert("Informe a data de pagamento e selecione uma fatura.");
@@ -111,7 +120,7 @@ export default function AppFaturasLTSL() {
     setMensagem(msg);
   };
 
-  // ENVIAR WHATSAPP
+  // --- ENVIAR WHATSAPP ---
   const enviarWhatsApp = () => {
     if (!numeroWhatsApp || !mensagem) return alert("Informe o número e gere a mensagem.");
     const numero = numeroWhatsApp.replace(/\D/g, "");
@@ -119,16 +128,16 @@ export default function AppFaturasLTSL() {
     window.open(`https://wa.me/55${numero}?text=${texto}`, "_blank");
   };
 
-  // ----------------- JSX -----------------
+  // --- JSX ---
   return (
     <div style={{ padding: 24, fontFamily: "sans-serif", background: "#f9f9fb", minHeight: "100vh" }}>
-      {/* LOGO */}
+      {/* LOGO via Imgur */}
       <div style={{ textAlign: "center", marginBottom: 20 }}>
         <img
-  src="https://i.imgur.com/sgO3fqf.png"
-  alt="Logo LTSL"
-  style={{ width: 180, height: "auto", margin: "0 auto", display: "block" }}
-      />
+          src="https://i.imgur.com/sgO3fqf.png"
+          alt="Logo LTSL"
+          style={{ width: 180, height: "auto", margin: "0 auto", display: "block" }}
+        />
       </div>
       {/* LOGIN */}
       {!logado ? (
@@ -249,7 +258,7 @@ export default function AppFaturasLTSL() {
           </div>
         </div>
       ) : (
-        // TELA DE CÁLCULO BONITA
+        // TELA DE CÁLCULO MODERNA
         <div style={{
           background: "#fff",
           borderRadius: 10,
@@ -291,83 +300,83 @@ export default function AppFaturasLTSL() {
                   <label style={{ fontWeight: 500 }}>Data de Pagamento:</label>
                   <input
                     type="date"
-                    value={pagamento}
-                    onChange={e => setPagamento(e.target.value)}
+                  value={pagamento}
+                  onChange={e => setPagamento(e.target.value)}
+                  style={inputStyle}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontWeight: 500 }}>Protestado?</label>
+                <select
+                  value={protestado}
+                  onChange={e => setProtestado(e.target.value)}
+                  style={inputStyle}>
+                  <option value="nao">Não</option>
+                  <option value="sim">Sim</option>
+                </select>
+              </div>
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ fontWeight: 500 }}>Domínio:</label>
+              <select
+                value={dominio}
+                onChange={e => setDominio(e.target.value)}
+                style={inputStyle}>
+                <option value="SBA">SBA</option>
+                <option value="SLU">SLU</option>
+              </select>
+            </div>
+            <button
+              onClick={calcularValorAtualizado}
+              style={botao}>
+              Gerar Mensagem
+            </button>
+            {mensagem && (
+              <>
+                <div style={{ marginTop: 20 }}>
+                  <label style={{ fontWeight: 500 }}>Número WhatsApp (com DDD):</label>
+                  <input
+                    value={numeroWhatsApp}
+                    onChange={e => setNumeroWhatsApp(e.target.value)}
+                    placeholder="Ex: 41999998888"
                     style={inputStyle}
                   />
                 </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontWeight: 500 }}>Protestado?</label>
-                  <select
-                    value={protestado}
-                    onChange={e => setProtestado(e.target.value)}
-                    style={inputStyle}>
-                    <option value="nao">Não</option>
-                    <option value="sim">Sim</option>
-                  </select>
-                </div>
-              </div>
-              <div style={{ marginBottom: 20 }}>
-                <label style={{ fontWeight: 500 }}>Domínio:</label>
-                <select
-                  value={dominio}
-                  onChange={e => setDominio(e.target.value)}
-                  style={inputStyle}>
-                  <option value="SBA">SBA</option>
-                  <option value="SLU">SLU</option>
-                </select>
-              </div>
-              <button
-                onClick={calcularValorAtualizado}
-                style={botao}>
-                Gerar Mensagem
-              </button>
-              {mensagem && (
-                <>
-                  <div style={{ marginTop: 20 }}>
-                    <label style={{ fontWeight: 500 }}>Número WhatsApp (com DDD):</label>
-                    <input
-                      value={numeroWhatsApp}
-                      onChange={e => setNumeroWhatsApp(e.target.value)}
-                      placeholder="Ex: 41999998888"
-                      style={inputStyle}
-                    />
-                  </div>
-                  <textarea
-                    readOnly
-                    value={mensagem}
-                    style={{
-                      width: "100%",
-                      height: 140,
-                      padding: 12,
-                      border: "1px solid #ddd",
-                      borderRadius: 6,
-                      marginTop: 10,
-                      fontSize: 14,
-                      fontFamily: "inherit"
-                    }}
-                  />
-                  <button
-                    onClick={enviarWhatsApp}
-                    style={{
-                      width: "100%",
-                      padding: 14,
-                      backgroundColor: "#25D366",
-                      color: "#fff",
-                      border: "none",
-                      borderRadius: 6,
-                      fontWeight: 700,
-                      fontSize: 16,
-                      marginTop: 6
-                    }}>
-                    Enviar via WhatsApp
-                  </button>
-                </>
-              )}
-            </>
-          )}
-        </div>
-      )}
-    </div>
-  );
+                <textarea
+                  readOnly
+                  value={mensagem}
+                  style={{
+                    width: "100%",
+                    height: 140,
+                    padding: 12,
+                    border: "1px solid #ddd",
+                    borderRadius: 6,
+                    marginTop: 10,
+                    fontSize: 14,
+                    fontFamily: "inherit"
+                  }}
+                />
+                <button
+                  onClick={enviarWhatsApp}
+                  style={{
+                    width: "100%",
+                    padding: 14,
+                    backgroundColor: "#25D366",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 6,
+                    fontWeight: 700,
+                    fontSize: 16,
+                    marginTop: 6
+                  }}>
+                  Enviar via WhatsApp
+                </button>
+              </>
+            )}
+          </>
+        )}
+      </div>
+    )}
+  </div>
+);
 }
