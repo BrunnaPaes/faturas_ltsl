@@ -1,24 +1,26 @@
 import React, { useEffect, useState } from "react";
 
-// Função para parsear JSON do Google Sheets (API Visualization)
+// Função para converter o JSON do Google Sheets em array de objetos
 function parseGoogleSheetJSON(data) {
-  // Remove callback Google
-  const json = JSON.parse(data.substring(47).replace(/;$/, ""));
-  const cols = json.table.cols.map(col => col.label);
-  return json.table.rows
-    .filter(row => row.c.some(cell => cell && cell.v)) // ignora linhas em branco
+  const json = JSON.parse(data.substring(47).replace(/;$/, "")); // remove o prefixo e sufixo
+  const cols = json.table.cols.map(col => col.label || "");
+  const rows = json.table.rows
+    .filter(row => row.c && row.c.length)
     .map(row =>
       Object.fromEntries(
-        row.c.map((cell, i) => [cols[i], cell ? cell.v : ""])
+        row.c.map((cell, i) => [cols[i], cell ? (cell.f ?? cell.v ?? "") : ""])
       )
     );
+  // Remove linhas que são cabeçalho ou resumo (tipo "CONTROLE DE COBRANÇA")
+  return rows.filter(obj =>
+    obj["CLIENTE"] && obj["FATURA"] && obj["SALDO"] !== ""
+  );
 }
 
 export default function App() {
   const [faturas, setFaturas] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
-
   // Filtros
   const [filtroCliente, setFiltroCliente] = useState("");
   const [filtroVendedor, setFiltroVendedor] = useState("");
@@ -57,17 +59,16 @@ export default function App() {
   // Gráficos/resumo
   const atrasadas = faturasFiltradas.filter(f => String(f["LIQUIDADA/ATRASADA"]).toUpperCase().includes("ATRASADA"));
   const topAtrasadas = atrasadas
-    .sort((a, b) => (Number(String(b["SALDO"]).replace(",", ".") || 0) - Number(String(a["SALDO"]).replace(",", ".") || 0)))
+    .sort((a, b) => (Number(String(b["SALDO"]).replace(".", "").replace(",", ".") || 0) - Number(String(a["SALDO"]).replace(".", "").replace(",", ".") || 0)))
     .slice(0, 5);
 
   const totalAtrasado = atrasadas.reduce(
-    (acc, f) => acc + (Number(String(f["SALDO"]).replace(",", ".") || 0)), 0
+    (acc, f) => acc + (Number(String(f["SALDO"]).replace(".", "").replace(",", ".") || 0)), 0
   );
   const totalAVencer = faturasFiltradas
     .filter(f => String(f["LIQUIDADA/ATRASADA"]).toUpperCase().includes("A VENCER"))
-    .reduce((acc, f) => acc + (Number(String(f["SALDO"]).replace(",", ".") || 0)), 0);
+    .reduce((acc, f) => acc + (Number(String(f["SALDO"]).replace(".", "").replace(",", ".") || 0)), 0);
 
-  // Renderização principal
   return (
     <div style={{ background: "#f9f9fb", minHeight: "100vh", fontFamily: "sans-serif", padding: 0 }}>
       {/* LOGO */}
@@ -80,7 +81,7 @@ export default function App() {
       </div>
       <div style={{ maxWidth: 1200, margin: "32px auto 0 auto" }}>
         <h2>
-          Faturas - <span style={{ color: "#111", fontWeight: 700 }}>VIVIAN MAGALHAES</span>
+          Faturas - <span style={{ color: "#111", fontWeight: 700 }}>LTSL</span>
         </h2>
         {/* Gráficos/Resumo */}
         <div style={{ display: "flex", gap: 28, marginBottom: 20 }}>
@@ -94,7 +95,7 @@ export default function App() {
                 topAtrasadas.map((f, i) => (
                   <li key={i}>
                     <b>{f["CLIENTE"]}</b> — {f["FATURA"]} — R${" "}
-                    {Number(String(f["SALDO"]).replace(",", ".") || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    {Number(String(f["SALDO"]).replace(".", "").replace(",", ".") || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                   </li>
                 ))
               )}
@@ -161,7 +162,7 @@ export default function App() {
                   <td>{f["CNPJ/CPF"]}</td>
                   <td>{f["FATURA"]}</td>
                   <td>{f["VENCIMEN"]}</td>
-                  <td>R$ {Number(String(f["SALDO"]).replace(",", ".") || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                  <td>R$ {Number(String(f["SALDO"]).replace(".", "").replace(",", ".") || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
                   <td>{f["DIAS ATRASO"]}</td>
                   <td>{f["LIQUIDADA/ATRASADA"]}</td>
                   <td>{f["VENDEDOR"]}</td>
